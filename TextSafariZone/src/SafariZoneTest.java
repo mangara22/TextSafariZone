@@ -6,7 +6,7 @@ class SafariZoneTest {
 
     @org.junit.jupiter.api.BeforeEach
     void setUp() {
-        SafariZone.loadAllPokemon("pokemon");
+        SafariZone.loadAllPokemon("M");
         SafariZone.loadAllZones();
     }
 
