@@ -2,6 +2,9 @@ import java.util.*;
 import java.io.*;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * @author Michael Angara
+ */
 public class SafariZone {
 
     //ANSI Colors
@@ -50,6 +53,9 @@ public class SafariZone {
         }
     }
 
+    /**
+     * prints all the player's Pokémon they have caught in the Safari Zone
+     */
     private static void printSafariPokemon() {
         System.out.println(YELLOW + "+=====YOUR SAFARI POKÉMON=====+" + RESET);
         if(safariPokemon.size() == 0){
