@@ -1,8 +1,8 @@
 import java.util.*;
 public class Zone {
 
-    private String zName;
-    private ArrayList<Pokemon> zonePokemon = new ArrayList<>();
+    private final String zName;
+    private final ArrayList<Pokemon> zonePokemon = new ArrayList<>();
 
     public Zone(String name){
         zName = name;
@@ -14,7 +14,7 @@ public class Zone {
 
     public String toString() {
         StringBuilder value = new StringBuilder();
-        value.append("+=====" + zName + "=====+\n");
+        value.append("+=====").append(zName).append("=====+\n");
         for(Pokemon p : zonePokemon){
             value.append(p).append("\n");
         }

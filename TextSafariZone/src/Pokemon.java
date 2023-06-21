@@ -1,7 +1,7 @@
 public class Pokemon {
 
-    private String name;
-    private String type;
+    private final String name;
+    private final String type;
 
     public Pokemon(String[] line){
         name = line[0];
@@ -11,4 +11,5 @@ public class Pokemon {
     public String toString() {return name + " [" + type + "]";}
 
     public String getName() {return name;}
+    public String getType() {return type;}
 }

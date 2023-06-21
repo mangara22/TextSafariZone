@@ -1,37 +1,69 @@
 import java.util.*;
 import java.io.*;
+import java.util.concurrent.TimeUnit;
 
 public class SafariZone {
 
+    //ANSI Colors
     public static final String RESET = "\033[0m";
-    public static final String RED = "\033[0;31m";     // RED
-    public static final String GREEN = "\033[0;32m";   // GREEN
-    public static final String YELLOW = "\033[0;33m";  // YELLOW
-    public static final String BLUE = "\033[0;34m";    // BLUE
-    public static final String PURPLE = "\033[0;35m";  // PURPLE
-    public static final String CYAN = "\033[0;36m";    // CYAN
-    public static final String WHITE = "\033[0;37m";   // WHITE
-    public static final String RED_BOLD = "\033[1;31m";    // RED
-    public static final String GREEN_BOLD = "\033[1;32m";  // GREEN
-    public static final String YELLOW_BOLD = "\033[1;33m"; // YELLOW
-    public static final String BLUE_BOLD = "\033[1;34m";   // BLUE
-    public static final String PURPLE_BOLD = "\033[1;35m"; // PURPLE
-    public static final String CYAN_BOLD = "\033[1;36m";   // CYAN
-    public static final String WHITE_BOLD = "\033[1;37m";  // WHITE
+    public static final String RED = "\033[0;31m";
+    public static final String GREEN = "\033[0;32m";
+    public static final String YELLOW = "\033[0;33m";
+    public static final String BLUE = "\033[0;34m";
+    public static final String PURPLE = "\033[0;35m";
+    public static final String CYAN = "\033[0;36m";
+    public static final String WHITE = "\033[0;37m";
+    public static final String RED_BOLD = "\033[1;31m";
+    public static final String GREEN_BOLD = "\033[1;32m";
+    public static final String YELLOW_BOLD = "\033[1;33m";
+    public static final String BLUE_BOLD = "\033[1;34m";
+    public static final String PURPLE_BOLD = "\033[1;35m";
+    public static final String CYAN_BOLD = "\033[1;36m";
+    public static final String WHITE_BOLD = "\033[1;37m";
 
-    public static final Random random = new Random();
-    public static final Scanner scanner = new Scanner(System.in);
-    private static ArrayList<Pokemon> allPokemon;
+    private static final Random random = new Random();
+    private static final Scanner scanner = new Scanner(System.in);
+    private static final ArrayList<Pokemon> allPokemon = new ArrayList<>(75);
     private static final ArrayList<Zone> allZones = new ArrayList<>(5);
-    public static final String[] zoneNames = {"Desert", "Forest", "Grasslands", "Tundra", "Aquatic"};
-    public static int pokeballs = 30;
-    public static int berries = 5;
-    public static int displayRates = 10; //max number of times to display catch/flee rate
+    private static final String[] zoneNames = {"Desert", "Forest", "Grasslands", "Tundra", "Aquatic"};
+    private static final ArrayList<Pokemon> safariPokemon = new ArrayList<>();
+    private static int pokeballs = 30;
+    private static int berries = 5;
+    private static int bait = 20;
+    private static int mud = 20;
+    private static int displayRates = 10;
 
+    //the important stuff
     public static ArrayList<Pokemon> getAllPokemon() {return allPokemon;}
-
     public static ArrayList<Zone> getAllZones() {return allZones;}
 
+    /**
+     * helps to "pause" the program to add some level of detail to this basic game
+     * @param milliseconds number in ms for how long to delay the program
+     */
+    private static void delay(int milliseconds) {
+        try{
+            Thread.sleep(milliseconds);
+        }
+        catch(InterruptedException e){
+            e.printStackTrace();
+        }
+    }
+
+    private static void printSafariPokemon() {
+        System.out.println(YELLOW + "+=====YOUR SAFARI POKÉMON=====+" + RESET);
+        if(safariPokemon.size() == 0){
+            System.out.println(WHITE + "No Pokémon caught yet." + RESET);
+        }
+        for(Pokemon p : safariPokemon){
+            System.out.println(WHITE + p + RESET);
+        }
+    }
+
+    /**
+     * loads 75 Pokémon from a .txt file
+     * @param name either K, J, or M depending on user input, represents 2 Pokémon regions and one mixed
+     */
     public static void loadAllPokemon(String name) {
         try{
             String fileName = switch (name) {
@@ -41,14 +73,10 @@ public class SafariZone {
                 default -> "";
             };
             Scanner scanner = new Scanner(new File(fileName + ".txt"));
-            int num = scanner.nextInt();
-            scanner.nextLine();
-            allPokemon = new ArrayList<>(num);
-            for(int i = 0; i < num; i++){
+            for(int i = 0; i < 75; i++){
                 String s = scanner.nextLine();
                 String[] input = s.split(",");
-                Pokemon p = new Pokemon(input);
-                allPokemon.add(p);
+                allPokemon.add(new Pokemon(input));
             }
             scanner.close();
         }
@@ -58,11 +86,15 @@ public class SafariZone {
         }
     }
 
+    /**
+     * loads all 5 zones by making a new zone with a name, and then populating it with 15 Pokémon from the list "allPokémon"
+     */
     public static void loadAllZones() {
         for(int i = 0; i < 5; i++){
             allZones.add(new Zone(zoneNames[i]));
         }
         /*
+        Indices:
         0-14: Desert
         15-29: Forest
         30-44: Grasslands
@@ -79,27 +111,27 @@ public class SafariZone {
         }
     }
 
+    /**
+     * starts and continues the Safari Zone game by asking for commands and displaying important aspects of the game
+     */
     public static void safariZone() {
         System.out.println(YELLOW_BOLD + "+=====Welcome to the SAFARI ZONE!=====+" + RESET);
-        System.out.println("You will enter the zone with " + WHITE_BOLD + pokeballs + RESET + " pokéballs and "
-                + WHITE_BOLD + berries + RESET + " berries, your time is up when you run out of pokéballs or you exceed " + WHITE_BOLD + "100" + RESET + " steps.");
+        System.out.println("You will enter the zone with " + WHITE_BOLD + pokeballs + RESET + " pokéballs along with some bait, mud, and berries. \nYour adventure will end when you run out of pokéballs or you exceed " + WHITE_BOLD + "100" + RESET + " steps.");
         System.out.print(YELLOW_BOLD + ">>" + RESET + "Would you like to enter? (Y/N): ");
         String choice = scanner.nextLine().toUpperCase();
         if(choice.equals("N")){
-            System.out.println(RED_BOLD + "That's fine, bye!" + RESET);
+            System.out.println(RED_BOLD + "That's fine :(, bye!" + RESET);
             System.exit(0);
         }
         System.out.print(YELLOW_BOLD + ">>" + RESET + "What Pokémon region would you like? Kanto(K) Johto(J) Mix(M): ");
         String region = scanner.nextLine().toUpperCase();
         loadAllPokemon(region);
         loadAllZones();
-        Pokemon player = allPokemon.get(random.nextInt(allPokemon.size())); //randomly choose player's Pokémon
-        System.out.println("You have been assigned a random Pokémon to use on this adventure: " + YELLOW + player + RESET);
+        long start = System.currentTimeMillis();
         int steps = 0; //every 10-20 steps, change zone
-        Zone currentZone = allZones.get(random.nextInt(allZones.size()));
+        Zone currentZone = allZones.get(random.nextInt(allZones.size())); //get random zone
         boolean zoneChange = true;
-        int total = 0; //total caught
-        int totalSteps = 0; //can also end if 100 steps has been reached
+        int totalSteps = 0;
         String zone = "--";
         label:
         while(true){
@@ -113,88 +145,103 @@ public class SafariZone {
             }
             int target = random.nextInt(10,20);
             if(zoneChange){
-                try{
-                    System.out.print("Loading a new zone");
-                    Thread.sleep(1000);
-                    for(int i = 0; i < 3; i++){
-                        System.out.print(".");
-                        Thread.sleep(2000);
-                    }
-                    switch (currentZone.getzName()) {
-                        case "Desert" -> {
-                            zone = YELLOW_BOLD + currentZone.getzName() + RESET;
-                            System.out.println("now entering the " + zone + " zone!");
-                            System.out.println(YELLOW + currentZone + RESET);
-                        }
-                        case "Forest" -> {
-                            zone = PURPLE_BOLD + currentZone.getzName() + RESET;
-                            System.out.println("now entering the " + zone + " zone!");
-                            System.out.println(PURPLE + currentZone + RESET);
-                        }
-                        case "Grasslands" -> {
-                            zone = GREEN_BOLD + currentZone.getzName() + RESET;
-                            System.out.println("now entering the " + zone + " zone!");
-                            System.out.println(GREEN + currentZone + RESET);
-                        }
-                        case "Tundra" -> {
-                            zone = CYAN_BOLD + currentZone.getzName() + RESET;
-                            System.out.println("now entering the " + zone + " zone!");
-                            System.out.println(CYAN + currentZone + RESET);
-                        }
-                        case "Aquatic" -> {
-                            zone = BLUE_BOLD + currentZone.getzName() + RESET;
-                            System.out.println("now entering the " + zone + " zone!");
-                            System.out.println(BLUE + currentZone + RESET);
-                        }
-                    }
-                    zoneChange = false;
+                System.out.print(WHITE_BOLD + "Loading a new zone" + RESET);
+                delay(1000);
+                for(int i = 0; i < 3; i++){
+                    System.out.print(WHITE_BOLD + "." + RESET);
+                    delay(1000);
                 }
-                catch(InterruptedException e){
-                    e.printStackTrace();
+                switch (currentZone.getzName()) {
+                    case "Desert" -> {
+                        zone = YELLOW_BOLD + currentZone.getzName() + RESET;
+                        System.out.println("now entering the " + zone + " zone!");
+                        delay(1000);
+                        System.out.println(YELLOW + "All you see are hills of sand..lots of sand..." + RESET);
+                        delay(1500);
+                        System.out.println(YELLOW + currentZone + RESET);
+                    }
+                    case "Forest" -> {
+                        zone = PURPLE_BOLD + currentZone.getzName() + RESET;
+                        System.out.println("now entering the " + zone + " zone!");
+                        delay(1000);
+                        System.out.println(PURPLE + "You enter a lush forest area..." + RESET);
+                        delay(1500);
+                        System.out.println(PURPLE + currentZone + RESET);
+                    }
+                    case "Grasslands" -> {
+                        zone = GREEN_BOLD + currentZone.getzName() + RESET;
+                        System.out.println("now entering the " + zone + " zone!");
+                        delay(1000);
+                        System.out.println(GREEN + "You see a big grassy open area, with towering mountains in the distance..." + RESET);
+                        delay(1500);
+                        System.out.println(GREEN + currentZone + RESET);
+                    }
+                    case "Tundra" -> {
+                        zone = CYAN_BOLD + currentZone.getzName() + RESET;
+                        System.out.println("now entering the " + zone + " zone!");
+                        delay(1000);
+                        System.out.println(CYAN + "It's..really..cold..here..." + RESET);
+                        delay(1500);
+                        System.out.println(CYAN + currentZone + RESET);
+                    }
+                    case "Aquatic" -> {
+                        zone = BLUE_BOLD + currentZone.getzName() + RESET;
+                        System.out.println("now entering the " + zone + " zone!");
+                        delay(1000);
+                        System.out.println(BLUE + "You see nothing but some beaches and a lot of water..." + RESET);
+                        delay(1500);
+                        System.out.println(BLUE + currentZone + RESET);
+                    }
                 }
+                zoneChange = false;
             }
-            if(steps == target){
+            if(steps == target){ //choose new random zone
                 steps = 0;
                 currentZone = allZones.get(random.nextInt(allZones.size()));
                 zoneChange = true;
             }
             int encounter = random.nextInt(2); //0 for no encounter, 1 for an encounter
-            int item = random.nextInt(4); //0-1 no item, 2 for pokéball, 3 for berry
+            int item = random.nextInt(8); //0-1 for pokéball, 2-3 for bait, 4-5 for mud, 6 for berry, 7 no item
             String input = options().toUpperCase();
             switch (input) {
-                case "M":
+                case "M" -> {
                     System.out.print("You take a step...");
-                    try{
-                        Thread.sleep(500);
-                    }
-                    catch(InterruptedException e){
-                        e.printStackTrace();
-                    }
-                    break;
-                case "L":
-                    if (item == 2) {
+                    delay(500);
+                }
+                case "L" -> {
+                    if (item == 0 || item == 1) {
                         System.out.println(RED + "You found a pokéball!" + RESET);
-                        ++pokeballs;
+                        pokeballs++;
+                    } else if (item == 2 || item == 3) {
+                        System.out.println(RED + "You found some bait!" + RESET);
+                        bait += random.nextInt(1,4);
                     }
-                    else if(item == 3){
-                        System.out.println(RED + "You found a berry!" + RESET);
-                        ++berries;
+                    else if (item == 4 || item == 5) {
+                        System.out.println(RED + "You found some balls of mud!" + RESET);
+                        mud += random.nextInt(1,4);
+                    }
+                    else if (item == 6) {
+                        System.out.println(YELLOW + "You found a berry!" + RESET);
+                        berries++;
                     }
                     else System.out.println(WHITE + "There is no item to take." + RESET);
                     continue;
-                case "S":
-                    stats(zone, totalSteps, total, player);
+                }
+                case "S" -> {
+                    stats(zone, totalSteps);
                     continue;
-                case "Q":
+                }
+                case "Q" -> {
+                    System.out.println(RED_BOLD + "You quit your adventure." + RESET);
                     break label;
+                }
             }
             if(encounter == 1){
                 System.out.println(YELLOW + "It's a BATTLE!" + RESET);
-                int value = battle(currentZone, player);
+                int value = battle(currentZone);
                 if(value == -1){
                     break;
                 }
-                total += value;
             }
             else{
                 System.out.println(WHITE + "Nothing there." + RESET);
@@ -202,41 +249,62 @@ public class SafariZone {
             totalSteps++;
             steps++;
         }
+        long end = System.currentTimeMillis();
+        long timeSpent = end - start;
         System.out.println(YELLOW_BOLD + "Your adventure has ended, here are some stats: " + RESET);
-        stats(zone, totalSteps, total, player);
+        stats(zone, totalSteps);
+        long minutes = TimeUnit.MILLISECONDS.toMinutes(timeSpent);
+        long seconds = (TimeUnit.MILLISECONDS.toSeconds(timeSpent)) % 60;
+        System.out.print("Total Time spent: " + WHITE_BOLD + minutes + RESET + " minutes");
+        System.out.println(", " + WHITE_BOLD + seconds + RESET + " seconds");
     }
 
+    /**
+     * prints out the commands for the user to use during the game
+     * @return - the user's input in uppercase
+     */
     public static String options() {
         System.out.println(YELLOW_BOLD + "+=====OPTIONS=====+" + RESET);
         System.out.print(YELLOW_BOLD + ">>" + RESET + "Move(M) Look(L) Stats(S) Quit(Q): ");
         return scanner.nextLine().toUpperCase();
     }
 
-    public static void stats(String zone, int totalSteps, int total, Pokemon player) {
+    /**
+     * prints out user stats
+     * @param zone the user's current zone
+     * @param totalSteps the user's total steps taken in the game
+     */
+    public static void stats(String zone, int totalSteps) {
         System.out.println(YELLOW_BOLD + "+=====STATS=====+" + RESET);
-        System.out.println("Your pokémon: " + YELLOW + player + RESET);
         System.out.println("Current zone: " + zone);
         System.out.println("Current steps: " + WHITE_BOLD + totalSteps + RESET);
-        System.out.println("Total caught: " + WHITE_BOLD + total + RESET);
+        System.out.println("Total Pokémon caught: " + WHITE_BOLD + safariPokemon.size() + RESET);
         System.out.println("Total pokéballs: " + WHITE_BOLD + pokeballs + RESET);
+        System.out.println("Total bait: " + WHITE_BOLD + bait + RESET);
+        System.out.println("Total mud: " + WHITE_BOLD + mud + RESET);
         System.out.println("Total berries: " + WHITE_BOLD + berries + RESET);
         System.out.println("Total display rates uses left: " + WHITE_BOLD + displayRates + RESET);
+        printSafariPokemon();
     }
 
-    public static int battle(Zone current, Pokemon player) {
+    /**
+     * starts and continues a Pokémon battle by displaying opponent, user commands, etc.
+     * @param current the user's current zone they're in, to choose a random Pokémon native to that current zone
+     * @return an integer representing the outcome of the battle: 0 for not caught, 1 for caught, -1 for out of pokéballs
+     */
+    public static int battle(Zone current) {
         Pokemon opponent = current.getZonePokemon().get(random.nextInt(15)); //choose random Pokémon from indices 0-14
         System.out.println("A wild " + RED + opponent.getName() + RESET + " has appeared!");
-        System.out.println("You sent out " + YELLOW + player + RESET + "!");
-        int fleeRate = random.nextInt(6); //5 flees
-        int catchRate = random.nextInt(4); //0 miss, 1-3 for catch
+        int fleeRate = random.nextInt(6); //4-5 flees
+        int catchRate = random.nextInt(5); //0-2 miss, 3-4 for catch
         boolean displayOn = false;
         if(displayRates > 0){
             System.out.print(YELLOW_BOLD + ">>" + RESET + "You have " + WHITE_BOLD + displayRates + RESET + " uses left, would you like to display catch/flee rates? (Y/N): ");
             String display = scanner.nextLine().toUpperCase();
             if(display.equals("Y")){
                 displayOn = true;
-                System.out.println(RED + "Catch/Flee rates will be shown during the entire battle." + RESET);
-                --displayRates;
+                System.out.println(WHITE_BOLD + "Catch/Flee rates will be shown during the entire battle." + RESET);
+                displayRates--;
             }
         }
         else System.out.println(RED + "You have no display rates uses left!" + RESET);
@@ -245,34 +313,29 @@ public class SafariZone {
                 System.out.println(WHITE + "CATCH RATE: " + catchRate + RESET);
                 System.out.println(WHITE + "FLEE RATE: " + fleeRate + RESET);
             }
-            System.out.println("--------" + RED + opponent + RESET + "--------\nVS.");
-            System.out.println("--------" + YELLOW + player + RESET + "--------");
-            System.out.print(YELLOW_BOLD + ">>" + RESET + "What would you like to do? Catch(C) Berry(B) Run(R): ");
+            System.out.println("--------" + RED + opponent + RESET + "--------");
+            System.out.print(YELLOW_BOLD + ">>" + RESET + "What would you like to do? Catch(C) Bait(T) Mud(M) Berry(B) Run(R): ");
             String choice = scanner.nextLine().toUpperCase();
             switch (choice) {
                 case "C" -> {
                     if (pokeballs > 0) {
                         System.out.print("You threw a pokéball...");
-                        try{
-                            Thread.sleep(1000);
-                            for(int i = 1; i <= 3; i++){
-                                System.out.print(i + "..");
-                                Thread.sleep(1000);
-                            }
+                        delay(1000);
+                        for(int i = 1; i <= 3; i++){
+                            System.out.print(i + "..");
+                            delay(1000);
                         }
-                        catch(InterruptedException e){
-                            e.printStackTrace();
-                        }
-                        if(fleeRate == 5){
+                        if(fleeRate >= 4) {
                             System.out.println(RED + opponent.getName() + RESET + " is took quick and ran away!");
                             return 0;
                         }
-                        if (catchRate > 0) {
+                        else if (catchRate >= 3) {
                             System.out.println("you caught " + RED + opponent.getName() + RESET + "!");
+                            safariPokemon.add(opponent);
                             pokeballs--;
                             return 1;
                         }
-                        System.out.println(YELLOW + "your pokéball missed!" + RESET);
+                        System.out.println(RED + opponent.getName() + RESET + " broke out of the pokéball!");
                         pokeballs--;
                         catchRate--;
                         fleeRate++;
@@ -281,16 +344,29 @@ public class SafariZone {
                         return -1;
                     }
                 }
+                case "T" -> {
+                    if(bait > 0) {
+                        System.out.println(WHITE_BOLD + "You threw some bait! Flee rate decreased but catch rate decreased too." + RESET);
+                        bait--;
+                        fleeRate--;
+                        catchRate--;
+                    } else System.out.println(YELLOW + "You have no more bait left!");
+                }
+                case "M" -> {
+                    if(mud > 0) {
+                        System.out.println(WHITE_BOLD + "You threw some mud! Catch rate increased but flee rate increased too.");
+                        mud--;
+                        catchRate++;
+                        fleeRate++;
+                    } else System.out.println(YELLOW + "You have no more mud left!");
+                }
                 case "B" -> {
                     if (berries > 0) {
-                        System.out.println(RED + "You threw a berry! Catch rate increased and flee rate decreased." + RESET);
+                        System.out.println(WHITE_BOLD + "You threw a berry! Catch rate increased and flee rate decreased." + RESET);
+                        berries--;
                         catchRate++;
                         fleeRate--;
-                        --berries;
-                    } else {
-                        System.out.println(YELLOW + "You have no more berries left!" + RESET);
-                        continue;
-                    }
+                    } else System.out.println(YELLOW + "You have no more berries left!" + RESET);
                 }
                 case "R" -> {
                     System.out.println("You ran away from " + RED + opponent.getName() + RESET + ".");
