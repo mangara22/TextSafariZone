@@ -204,7 +204,7 @@ public class SafariZone {
                 zoneChange = false;
             }
             if(steps == target){ //choose new random zone
-                steps = 0;
+                steps = 0; //reset step counter
                 currentZone = allZones.get(random.nextInt(allZones.size()));
                 zoneChange = true;
             }
@@ -323,7 +323,7 @@ public class SafariZone {
                 System.out.println(WHITE + "FLEE RATE: " + fleeRate + RESET);
             }
             if(safariPokemon.contains(opponent)){
-                System.out.println("********" + RED + opponent + RESET + "********");
+                System.out.println("********" + RED + opponent + RESET + "********"); //already encountered
             } else System.out.println("--------" + RED + opponent + RESET + "--------");
             System.out.print(YELLOW_BOLD + ">>" + RESET + "What would you like to do? Catch(C) Bait(T) Mud(M) Berry(B) Run(R): ");
             String choice = scanner.nextLine().toUpperCase();
