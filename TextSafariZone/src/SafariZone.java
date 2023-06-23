@@ -151,7 +151,7 @@ public class SafariZone {
                 System.out.println(RED_BOLD + "You have no more pokéballs left!" + RESET);
                 break;
             }
-            int target = random.nextInt(10,20);
+            int target = random.nextInt(10,21);
             if(zoneChange){
                 System.out.print(WHITE_BOLD + "Loading a new zone" + RESET);
                 delay(1000);
