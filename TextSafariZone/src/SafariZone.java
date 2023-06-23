@@ -35,6 +35,7 @@ public class SafariZone {
     private static int bait = 20;
     private static int mud = 20;
     private static int displayRates = 10;
+    private static String region;
 
     //the important stuff
     public static ArrayList<Pokemon> getAllPokemon() {return allPokemon;}
@@ -72,13 +73,13 @@ public class SafariZone {
      */
     public static void loadAllPokemon(String name) {
         try{
-            String fileName = switch (name) {
-                case "K" -> "kanto";
-                case "J" -> "johto";
-                case "M" -> "pokemon";
+            region = switch (name) {
+                case "K" -> "Kanto";
+                case "J" -> "Johto";
+                case "M" -> "Mixed";
                 default -> "";
             };
-            Scanner scanner = new Scanner(new File(fileName + ".txt"));
+            Scanner scanner = new Scanner(new File(region + ".txt"));
             for(int i = 0; i < 75; i++){
                 String s = scanner.nextLine();
                 String[] input = s.split(",");
@@ -130,9 +131,10 @@ public class SafariZone {
             System.exit(0);
         }
         System.out.print(YELLOW_BOLD + ">>" + RESET + "What Pokémon region would you like? Kanto(K) Johto(J) Mix(M): ");
-        String region = scanner.nextLine().toUpperCase();
-        loadAllPokemon(region);
+        String pRegion = scanner.nextLine().toUpperCase();
+        loadAllPokemon(pRegion);
         loadAllZones();
+        System.out.println("You selected the " + YELLOW + region + RESET + " region!");
         long start = System.currentTimeMillis();
         int steps = 0; //every 10-20 steps, change zone
         Zone currentZone = allZones.get(random.nextInt(allZones.size())); //get random zone
@@ -282,6 +284,7 @@ public class SafariZone {
      */
     public static void stats(String zone, int totalSteps) {
         System.out.println(YELLOW_BOLD + "+=====STATS=====+" + RESET);
+        System.out.println("Current region: " + region);
         System.out.println("Current zone: " + zone);
         System.out.println("Current steps: " + WHITE_BOLD + totalSteps + RESET);
         System.out.println("Total Pokémon caught: " + WHITE_BOLD + safariPokemon.size() + RESET);
@@ -319,7 +322,9 @@ public class SafariZone {
                 System.out.println(WHITE + "CATCH RATE: " + catchRate + RESET);
                 System.out.println(WHITE + "FLEE RATE: " + fleeRate + RESET);
             }
-            System.out.println("--------" + RED + opponent + RESET + "--------");
+            if(safariPokemon.contains(opponent)){
+                System.out.println("********" + RED + opponent + RESET + "********");
+            } else System.out.println("--------" + RED + opponent + RESET + "--------");
             System.out.print(YELLOW_BOLD + ">>" + RESET + "What would you like to do? Catch(C) Bait(T) Mud(M) Berry(B) Run(R): ");
             String choice = scanner.nextLine().toUpperCase();
             switch (choice) {
@@ -352,6 +357,10 @@ public class SafariZone {
                 }
                 case "T" -> {
                     if(bait > 0) {
+                        if(fleeRate >= 4) {
+                            System.out.println(RED + opponent.getName() + RESET + " is took quick and ran away!");
+                            return 0;
+                        }
                         System.out.println(WHITE_BOLD + "You threw some bait! Flee rate decreased but catch rate decreased too." + RESET);
                         bait--;
                         fleeRate--;
@@ -360,6 +369,10 @@ public class SafariZone {
                 }
                 case "M" -> {
                     if(mud > 0) {
+                        if(fleeRate >= 4) {
+                            System.out.println(RED + opponent.getName() + RESET + " is took quick and ran away!");
+                            return 0;
+                        }
                         System.out.println(WHITE_BOLD + "You threw some mud! Catch rate increased but flee rate increased too.");
                         mud--;
                         catchRate++;
@@ -368,6 +381,10 @@ public class SafariZone {
                 }
                 case "B" -> {
                     if (berries > 0) {
+                        if(fleeRate >= 4) {
+                            System.out.println(RED + opponent.getName() + RESET + " is took quick and ran away!");
+                            return 0;
+                        }
                         System.out.println(WHITE_BOLD + "You threw a berry! Catch rate increased and flee rate decreased." + RESET);
                         berries--;
                         catchRate++;
